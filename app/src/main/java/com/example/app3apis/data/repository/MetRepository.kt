@@ -17,7 +17,6 @@ class MetRepository(
 
     suspend fun getMetArtworks(): List<ArtworkModel> {
         return try {
-            // Use known valid Met museum object IDs for instant and reliable loading
             val reliableIds = listOf(436532, 459080, 437133, 544455, 436121)
             val artworks = mutableListOf<ArtworkModel>()
             for (id in reliableIds) {
@@ -27,12 +26,37 @@ class MetRepository(
                         artworks.add(mapper.mapToDomain(obj))
                     }
                 } catch (e: Exception) {
-                    // skip on error
+                    // skip
                 }
             }
-            artworks
+            if (artworks.isNotEmpty()) {
+                artworks
+            } else {
+                getFallbackMetArtworks()
+            }
         } catch (e: Exception) {
-            emptyList()
+            getFallbackMetArtworks()
         }
+    }
+
+    private fun getFallbackMetArtworks(): List<ArtworkModel> {
+        return listOf(
+            ArtworkModel(
+                id = 436532,
+                title = "Wheat Fields with Cypresses",
+                artist = "Vincent van Gogh",
+                imageUrl = "https://images.metmuseum.org/CRDImages/ep/web-large/DP145328.jpg",
+                date = "1889",
+                museum = "The Metropolitan Museum of Art"
+            ),
+            ArtworkModel(
+                id = 459080,
+                title = "The Dance Class",
+                artist = "Edgar Degas",
+                imageUrl = "https://images.metmuseum.org/CRDImages/ph/web-large/DP-14660-001.jpg",
+                date = "1874",
+                museum = "The Metropolitan Museum of Art"
+            )
+        )
     }
 }

@@ -9,6 +9,7 @@ data class WeatherResponseDto(
 )
 
 data class CurrentWeatherDto(
+
     @SerializedName("temperature") val temperature: Double,
     @SerializedName("windspeed") val windspeed: Double,
     @SerializedName("weathercode") val weathercode: Int
