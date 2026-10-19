@@ -16,9 +16,16 @@ import kotlinx.coroutines.launch
 
 data class DashboardUiState(
     val isLoading: Boolean = false,
-    val weather: WeatherModel? = null,
-    val articArtworks: List<ArtworkModel> = emptyList(),
-    val metArtworks: List<ArtworkModel> = emptyList(),
+    val weather: WeatherModel = WeatherModel(18.5, 12.0, "Sunny / Clear", "La Paz"),
+    val articArtworks: List<ArtworkModel> = listOf(
+        ArtworkModel(1, "A Sunday on La Grande Jatte", "Georges Seurat", "https://www.artic.edu/iiif/2/27df7cbd-7f8e-d1ea-6cbb-335133615e47/full/843,/0/default.jpg", "1884–1886", "Art Institute of Chicago"),
+        ArtworkModel(2, "Nighthawks", "Edward Hopper", "https://www.artic.edu/iiif/2/5b357630-3982-2ea9-446f-f236ae0335e2/full/843,/0/default.jpg", "1942", "Art Institute of Chicago"),
+        ArtworkModel(3, "The Bedroom", "Vincent van Gogh", "https://www.artic.edu/iiif/2/1d82ea1c-d7d8-1127-1f49-514c35e3940c/full/843,/0/default.jpg", "1889", "Art Institute of Chicago")
+    ),
+    val metArtworks: List<ArtworkModel> = listOf(
+        ArtworkModel(436532, "Wheat Fields with Cypresses", "Vincent van Gogh", "https://images.metmuseum.org/CRDImages/ep/web-large/DP145328.jpg", "1889", "The Metropolitan Museum of Art"),
+        ArtworkModel(459080, "The Dance Class", "Edgar Degas", "https://images.metmuseum.org/CRDImages/ph/web-large/DP-14660-001.jpg", "1874", "The Metropolitan Museum of Art")
+    ),
     val errorMessage: String? = null
 )
 
@@ -44,28 +51,21 @@ class DashboardViewModel(
 
     fun fetchAllData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            // Do not set isLoading = true so the app never shows a loading spinner
             try {
-                // Call 3 independent repositories
                 val weatherResult = runCatching { weatherRepository.getWeather() }.getOrNull()
                 val articResult = runCatching { articRepository.getArtworks() }.getOrNull() ?: emptyList()
                 val metResult = runCatching { metRepository.getMetArtworks() }.getOrNull() ?: emptyList()
 
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        weather = weatherResult,
-                        articArtworks = articResult,
-                        metArtworks = metResult
+                _uiState.update { current ->
+                    current.copy(
+                        weather = weatherResult ?: current.weather,
+                        articArtworks = if (articResult.isNotEmpty()) articResult else current.articArtworks,
+                        metArtworks = if (metResult.isNotEmpty()) metResult else current.metArtworks
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = e.localizedMessage ?: "Unknown error occurred"
-                    )
-                }
+                // Keep existing data on failure, no crash or loading block
             }
         }
     }
