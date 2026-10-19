@@ -4,14 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.app3apis.domain.model.ArtworkModel
+import com.example.app3apis.ui.screens.DetailScreen
+import com.example.app3apis.ui.screens.HomeScreen
 import com.example.app3apis.ui.theme.App3ApisTheme
+import com.example.app3apis.ui.viewmodel.DashboardViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,29 +18,25 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             App3ApisTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                val viewModel: DashboardViewModel = viewModel()
+                var selectedArtwork by remember { mutableStateOf<ArtworkModel?>(null) }
+
+                if (selectedArtwork == null) {
+                    HomeScreen(
+                        viewModel = viewModel,
+                        onArtworkClick = { artwork ->
+                            selectedArtwork = artwork
+                        }
+                    )
+                } else {
+                    DetailScreen(
+                        artwork = selectedArtwork!!,
+                        onBackClick = {
+                            selectedArtwork = null
+                        }
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    App3ApisTheme {
-        Greeting("Android")
     }
 }
