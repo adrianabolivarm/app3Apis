@@ -53,7 +53,7 @@ class MetRepository(
                 id = 436532,
                 title = "Wheat Fields with Cypresses",
                 artist = "Vincent van Gogh",
-                imageUrl = "https://images.metmuseum.org/CRDImages/ep/web-large/DP145328.jpg",
+                imageUrl = "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=800",
                 date = "1889",
                 museum = "The Metropolitan Museum of Art"
             ),
@@ -61,7 +61,7 @@ class MetRepository(
                 id = 459080,
                 title = "The Dance Class",
                 artist = "Edgar Degas",
-                imageUrl = "https://images.metmuseum.org/CRDImages/ph/web-large/DP-14660-001.jpg",
+                imageUrl = "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800",
                 date = "1874",
                 museum = "The Metropolitan Museum of Art"
             )
