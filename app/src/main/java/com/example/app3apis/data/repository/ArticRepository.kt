@@ -3,14 +3,22 @@ package com.example.app3apis.data.repository
 import com.example.app3apis.data.mapper.ArticMapper
 import com.example.app3apis.data.remote.ArticApiService
 import com.example.app3apis.domain.model.ArtworkModel
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 class ArticRepository(
     private val mapper: ArticMapper = ArticMapper()
 ) {
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(3, TimeUnit.SECONDS)
+        .readTimeout(3, TimeUnit.SECONDS)
+        .build()
+
     private val api: ArticApiService = Retrofit.Builder()
         .baseUrl("https://api.artic.edu/")
+        .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(ArticApiService::class.java)

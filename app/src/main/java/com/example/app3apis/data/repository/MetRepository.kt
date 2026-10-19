@@ -3,14 +3,22 @@ package com.example.app3apis.data.repository
 import com.example.app3apis.data.mapper.MetMapper
 import com.example.app3apis.data.remote.MetApiService
 import com.example.app3apis.domain.model.ArtworkModel
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 class MetRepository(
     private val mapper: MetMapper = MetMapper()
 ) {
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(3, TimeUnit.SECONDS)
+        .readTimeout(3, TimeUnit.SECONDS)
+        .build()
+
     private val api: MetApiService = Retrofit.Builder()
         .baseUrl("https://collectionapi.metmuseum.org/")
+        .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(MetApiService::class.java)
