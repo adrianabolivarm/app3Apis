@@ -2,7 +2,7 @@
 
 Aplicación móvil nativa para Android desarrollada en **Jetpack Compose** bajo la arquitectura **MVVM (Model-View-ViewModel)**. 
 
-La aplicación consume de forma independiente **3 APIs públicas, 100% gratuitas, sin registros y sin claves (Auth: No)**, mostrando un dashboard interactivo de clima y museos de arte mundial con carruseles horizontales y pantallas de detalle completas.
+La aplicación consume de forma independiente **3 APIs públicas, 100% gratuitas, sin registros y sin claves**, mostrando un dashboard interactivo de clima y museos de arte mundial con carruseles horizontales y pantallas de detalle completas.
 
 ---
 
@@ -20,7 +20,7 @@ La aplicación consume de forma independiente **3 APIs públicas, 100% gratuitas
 
 ---
 
-## 📂 Cumplimiento de Requisitos Obligatorios (Dónde está cada cosa)
+## 📂 Cumplimiento de Requisitos
 
 La estructura del proyecto está rigurosamente organizada por capas siguiendo los principios de arquitectura limpia y MVVM:
 
