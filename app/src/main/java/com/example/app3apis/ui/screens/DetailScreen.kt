@@ -1,12 +1,13 @@
 package com.example.app3apis.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,7 +24,9 @@ import com.example.app3apis.domain.model.ArtworkModel
 @Composable
 fun DetailScreen(
     artwork: ArtworkModel,
-    onBackClick: () -> Unit
+    isFavorito: Boolean,
+    onBackClick: () -> Unit,
+    onFavoritoClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -32,9 +35,18 @@ fun DetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onFavoritoClick) {
+                        Icon(
+                            imageVector = if (isFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorito",
+                            tint = if (isFavorito) Color(0xFFE53935) else Color.White
                         )
                     }
                 },

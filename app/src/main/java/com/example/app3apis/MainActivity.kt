@@ -10,17 +10,22 @@ import coil.Coil
 import coil.ImageLoader
 import okhttp3.OkHttpClient
 import com.example.app3apis.domain.model.ArtworkModel
+import com.example.app3apis.ui.favoritos.FavoritosScreen
+import com.example.app3apis.ui.favoritos.FavoritosViewModel
 import com.example.app3apis.ui.screens.DetailScreen
 import com.example.app3apis.ui.screens.HomeScreen
 import com.example.app3apis.ui.theme.App3ApisTheme
 import com.example.app3apis.ui.viewmodel.DashboardViewModel
+
+enum class CurrentScreen {
+    HOME, DETAIL, FAVORITOS
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Configure Coil with a browser User-Agent so museum servers allow image loading
         val imageLoader = ImageLoader.Builder(this)
             .okHttpClient {
                 OkHttpClient.Builder()
@@ -39,22 +44,52 @@ class MainActivity : ComponentActivity() {
         setContent {
             App3ApisTheme {
                 val viewModel: DashboardViewModel = viewModel()
-                var selectedArtwork by remember { mutableStateOf<ArtworkModel?>(null) }
+                val favoritosViewModel: FavoritosViewModel = viewModel()
 
-                if (selectedArtwork == null) {
-                    HomeScreen(
-                        viewModel = viewModel,
-                        onArtworkClick = { artwork ->
-                            selectedArtwork = artwork
+                var currentScreen by remember { mutableStateOf(CurrentScreen.HOME) }
+                var selectedArtwork by remember { mutableStateOf<ArtworkModel?>(null) }
+                val uiState by viewModel.uiState.collectAsState()
+
+                when (currentScreen) {
+                    CurrentScreen.HOME -> {
+                        HomeScreen(
+                            viewModel = viewModel,
+                            onArtworkClick = { artwork ->
+                                selectedArtwork = artwork
+                                currentScreen = CurrentScreen.DETAIL
+                            },
+                            onVerFavoritos = {
+                                currentScreen = CurrentScreen.FAVORITOS
+                            }
+                        )
+                    }
+                    CurrentScreen.DETAIL -> {
+                        if (selectedArtwork != null) {
+                            val isFav = selectedArtwork!!.id in uiState.favoritosIds
+                            DetailScreen(
+                                artwork = selectedArtwork!!,
+                                isFavorito = isFav,
+                                onBackClick = {
+                                    currentScreen = CurrentScreen.HOME
+                                },
+                                onFavoritoClick = {
+                                    viewModel.alternarFavorito(selectedArtwork!!)
+                                }
+                            )
                         }
-                    )
-                } else {
-                    DetailScreen(
-                        artwork = selectedArtwork!!,
-                        onBackClick = {
-                            selectedArtwork = null
-                        }
-                    )
+                    }
+                    CurrentScreen.FAVORITOS -> {
+                        FavoritosScreen(
+                            viewModel = favoritosViewModel,
+                            onVolver = {
+                                currentScreen = CurrentScreen.HOME
+                            },
+                            onArtworkClick = { artwork ->
+                                selectedArtwork = artwork
+                                currentScreen = CurrentScreen.DETAIL
+                            }
+                        )
+                    }
                 }
             }
         }
