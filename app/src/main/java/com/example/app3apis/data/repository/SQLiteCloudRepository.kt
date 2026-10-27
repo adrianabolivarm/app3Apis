@@ -1,51 +1,66 @@
 package com.example.app3apis.data.repository
 
-import com.example.app3apis.data.remote.SQLiteCloudApiService
+import com.example.app3apis.data.remote.SQLiteCloudApi
+import com.example.app3apis.data.remote.SqlBody
 import com.example.app3apis.domain.model.ArtworkModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
-class SQLiteCloudRepository(
-    private val apiService: SQLiteCloudApiService = SQLiteCloudApiService()
-) {
+class SQLiteCloudRepository {
 
-    companion object {
-        // Lista en memoria local para garantizar que la UI se actualice al instante en la práctica
-        val favoritosMemoria = mutableListOf<ArtworkModel>(
-            // Obra de ejemplo inicial opcional para pruebas
-        )
-    }
+    private val api: SQLiteCloudApi = Retrofit.Builder()
+        .baseUrl("https://ct9r2rqcvk.g5.gateway.sqlite.cloud/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(SQLiteCloudApi::class.java)
 
     suspend fun obtenerFavoritos(): List<ArtworkModel> = withContext(Dispatchers.IO) {
-        // Retorna la lista local actual para que la pantalla de favoritos muestre los items al instante
-        return@withContext favoritosMemoria.toList()
+        return@withContext try {
+            val response = api.obtenerFavoritos()
+            if (response.isSuccessful && response.body() != null) {
+                response.body()!!.map { entity ->
+                    ArtworkModel(
+                        id = entity.id,
+                        title = entity.title,
+                        artist = entity.artist,
+                        imageUrl = entity.imageUrl,
+                        date = entity.date,
+                        museum = entity.museum
+                    )
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     suspend fun agregarFavorito(artwork: ArtworkModel) = withContext(Dispatchers.IO) {
-        // 1. Actualizar memoria local al instante para que la UI responda inmediatamente
-        if (!favoritosMemoria.any { it.id == artwork.id }) {
-            favoritosMemoria.add(artwork)
-        }
-
-        // 2. Intentar registrar en SQLite Cloud en segundo plano
         try {
-            val query = "INSERT OR REPLACE INTO favoritos (id, title, artist, imageUrl, date, museum) VALUES (${artwork.id}, '${artwork.title.replace("'", "''")}', '${artwork.artist.replace("'", "''")}', '${artwork.imageUrl}', '${artwork.date}', '${artwork.museum}');"
-            apiService.ejecutarConsulta(query)
+            val body = SqlBody(
+                id = artwork.id,
+                title = artwork.title,
+                artist = artwork.artist,
+                imageUrl = artwork.imageUrl,
+                date = artwork.date,
+                museum = artwork.museum,
+                agregadoEn = System.currentTimeMillis()
+            )
+            api.agregarFavorito(body)
         } catch (e: Exception) {
-            // Evitar que un fallo de red detenga la app en la práctica
+            // handle error
         }
     }
 
     suspend fun eliminarFavorito(artwork: ArtworkModel) = withContext(Dispatchers.IO) {
-        // 1. Actualizar memoria local al instante
-        favoritosMemoria.removeAll { it.id == artwork.id }
-
-        // 2. Intentar eliminar en SQLite Cloud en segundo plano
         try {
-            val query = "DELETE FROM favoritos WHERE id = ${artwork.id};"
-            apiService.ejecutarConsulta(query)
+            val body = SqlBody(id = artwork.id)
+            api.eliminarFavorito(body)
         } catch (e: Exception) {
-            // Evitar fallos de red
+            // handle error
         }
     }
 }
