@@ -19,10 +19,8 @@ class SQLiteCloudApiService {
             val url = "https://${SQLiteCloudConfig.HOST}:${SQLiteCloudConfig.PORT}/" +
                     "?apikey=${SQLiteCloudConfig.API_KEY}&database=${SQLiteCloudConfig.DATABASE}"
 
-            val mediaType = "application/json; charset=utf-8".toMediaType()
-            val escapedQuery = sqlQuery.replace("\"", "\\\"")
-            val jsonBody = "{\"sql\": \"$escapedQuery\", \"query\": \"$escapedQuery\"}"
-            val body = jsonBody.toRequestBody(mediaType)
+            val mediaType = "text/plain; charset=utf-8".toMediaType()
+            val body = sqlQuery.toRequestBody(mediaType)
 
             val request = Request.Builder()
                 .url(url)
@@ -34,11 +32,11 @@ class SQLiteCloudApiService {
             val response = client.newCall(request).execute()
             val success = response.isSuccessful
             val responseString = response.body?.string() ?: ""
-            Log.d("SQLiteCloud", "SQL ejecutado en SQLite Cloud -> Éxito: $success | Respuesta: $responseString")
+            Log.d("SQLiteCloud", "SQL ejecutado -> Éxito: $success | Respuesta: $responseString")
             response.close()
             success
         } catch (e: Exception) {
-            Log.e("SQLiteCloud", "Error HTTP en SQLite Cloud: ${e.localizedMessage}")
+            Log.e("SQLiteCloud", "Error HTTP: ${e.localizedMessage}")
             false
         }
     }
