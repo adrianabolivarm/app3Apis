@@ -35,7 +35,7 @@ fun FavoritosScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Favoritos (Room DB)", color = Color.White) },
+                title = { Text("Mis Favoritos (SQLite Cloud)", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(

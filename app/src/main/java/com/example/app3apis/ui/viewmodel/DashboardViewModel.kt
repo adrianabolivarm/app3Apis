@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.app3apis.data.local.AppDatabase
 import com.example.app3apis.data.repository.ArticRepository
 import com.example.app3apis.data.repository.FavoritosRepository
 import com.example.app3apis.data.repository.MetRepository
@@ -12,10 +11,8 @@ import com.example.app3apis.data.repository.WeatherRepository
 import com.example.app3apis.domain.model.ArtworkModel
 import com.example.app3apis.domain.model.WeatherModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -39,21 +36,10 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val weatherRepository = WeatherRepository()
     private val articRepository = ArticRepository()
     private val metRepository = MetRepository()
-    private val favoritosRepository = FavoritosRepository(AppDatabase.obtener(application).favoritoDao())
+    private val favoritosRepository = FavoritosRepository()
 
-    private val _estadoApi = MutableStateFlow(DashboardUiState())
-
-    // Combine API state with Room favorite IDs flow (Paso 7 del Manual)
-    val uiState: StateFlow<DashboardUiState> = combine(
-        _estadoApi,
-        favoritosRepository.observarIds()
-    ) { estadoApi, ids ->
-        estadoApi.copy(favoritosIds = ids)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = DashboardUiState()
-    )
+    private val _uiState = MutableStateFlow(DashboardUiState())
+    val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     var selectedArtwork = mutableStateOf<ArtworkModel?>(null)
         private set
@@ -67,12 +53,18 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun alternarFavorito(artwork: ArtworkModel) {
-        val esFavorito = artwork.id in uiState.value.favoritosIds
+        val esFavorito = artwork.id in _uiState.value.favoritosIds
         viewModelScope.launch {
             if (esFavorito) {
-                favoritosRepository.quitar(artwork.id)
+                favoritosRepository.eliminarFavorito(artwork)
+                _uiState.update { state ->
+                    state.copy(favoritosIds = state.favoritosIds - artwork.id)
+                }
             } else {
-                favoritosRepository.agregar(artwork)
+                favoritosRepository.agregarFavorito(artwork)
+                _uiState.update { state ->
+                    state.copy(favoritosIds = state.favoritosIds + artwork.id)
+                }
             }
         }
     }
@@ -84,7 +76,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 val articResult = runCatching { articRepository.getArtworks() }.getOrNull() ?: emptyList()
                 val metResult = runCatching { metRepository.getMetArtworks() }.getOrNull() ?: emptyList()
 
-                _estadoApi.update { current ->
+                _uiState.update { current ->
                     current.copy(
                         weather = weatherResult ?: current.weather,
                         articArtworks = if (articResult.isNotEmpty()) articResult else current.articArtworks,
