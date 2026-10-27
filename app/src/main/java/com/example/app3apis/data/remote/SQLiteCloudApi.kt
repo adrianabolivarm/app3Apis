@@ -1,6 +1,5 @@
 package com.example.app3apis.data.remote
 
-import com.example.app3apis.data.local.FavoritoEntity
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -38,5 +37,5 @@ interface SQLiteCloudApi {
         "Content-Type: application/json"
     )
     @POST("v2/functions/obtener_favoritos")
-    suspend fun obtenerFavoritos(@Body body: Map<String, String> = emptyMap()): Response<List<FavoritoEntity>>
+    suspend fun obtenerFavoritos(@Body body: Map<String, String> = emptyMap()): Response<ResponseBody>
 }
