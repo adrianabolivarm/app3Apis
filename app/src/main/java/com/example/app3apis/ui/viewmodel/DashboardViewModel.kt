@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app3apis.data.repository.ArticRepository
-import com.example.app3apis.data.repository.FavoritosRepository
 import com.example.app3apis.data.repository.MetRepository
+import com.example.app3apis.data.repository.SQLiteCloudRepository
 import com.example.app3apis.data.repository.WeatherRepository
 import com.example.app3apis.domain.model.ArtworkModel
 import com.example.app3apis.domain.model.WeatherModel
@@ -36,7 +36,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val weatherRepository = WeatherRepository()
     private val articRepository = ArticRepository()
     private val metRepository = MetRepository()
-    private val favoritosRepository = FavoritosRepository()
+    private val sqliteCloudRepository = SQLiteCloudRepository()
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
@@ -46,26 +46,33 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         fetchAllData()
+        cargarFavoritosCloud()
     }
 
     fun selectArtwork(artwork: ArtworkModel?) {
         selectedArtwork.value = artwork
     }
 
+    fun cargarFavoritosCloud() {
+        viewModelScope.launch {
+            try {
+                val favs = sqliteCloudRepository.obtenerFavoritos()
+                _uiState.update { it.copy(favoritosIds = favs.map { it.id }.toSet()) }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
     fun alternarFavorito(artwork: ArtworkModel) {
-        val esFavorito = artwork.id in _uiState.value.favoritosIds
+        val esFavorito = artwork.id in uiState.value.favoritosIds
         viewModelScope.launch {
             if (esFavorito) {
-                favoritosRepository.eliminarFavorito(artwork)
-                _uiState.update { state ->
-                    state.copy(favoritosIds = state.favoritosIds - artwork.id)
-                }
+                sqliteCloudRepository.eliminarFavorito(artwork)
             } else {
-                favoritosRepository.agregarFavorito(artwork)
-                _uiState.update { state ->
-                    state.copy(favoritosIds = state.favoritosIds + artwork.id)
-                }
+                sqliteCloudRepository.agregarFavorito(artwork)
             }
+            cargarFavoritosCloud()
         }
     }
 
