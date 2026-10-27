@@ -59,6 +59,7 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = CurrentScreen.DETAIL
                             },
                             onVerFavoritos = {
+                                favoritosViewModel.cargarFavoritos() // Recargar al entrar
                                 currentScreen = CurrentScreen.FAVORITOS
                             }
                         )
