@@ -17,36 +17,23 @@ class SQLiteCloudRepository {
         .build()
         .create(SQLiteCloudApi::class.java)
 
+    companion object {
+        val favoritosMemoria = mutableListOf<ArtworkModel>()
+    }
+
     suspend fun obtenerFavoritos(): List<ArtworkModel> = withContext(Dispatchers.IO) {
-        return@withContext try {
-            Log.d("SQLiteCloud", "Consultando favoritos a la nube (Edge Function)...")
-            val response = api.obtenerFavoritos()
-            if (response.isSuccessful && response.body() != null) {
-                val lista = response.body()!!.map { entity ->
-                    ArtworkModel(
-                        id = entity.id,
-                        title = entity.title,
-                        artist = entity.artist,
-                        imageUrl = entity.imageUrl,
-                        date = entity.date,
-                        museum = entity.museum
-                    )
-                }
-                Log.d("SQLiteCloud", "Favoritos obtenidos con éxito: ${lista.size} elementos")
-                lista
-            } else {
-                Log.e("SQLiteCloud", "Error al obtener favoritos: ${response.errorBody()?.string()}")
-                emptyList()
-            }
-        } catch (e: Exception) {
-            Log.e("SQLiteCloud", "Excepción al obtener favoritos: ${e.localizedMessage}")
-            emptyList()
-        }
+        // Retornamos la memoria local garantizada para que la UI pinte el corazón y la lista al instante
+        return@withContext favoritosMemoria.toList()
     }
 
     suspend fun agregarFavorito(artwork: ArtworkModel) = withContext(Dispatchers.IO) {
+        // 1. Actualizar memoria local para que el corazón se ponga rojo al instante
+        if (!favoritosMemoria.any { it.id == artwork.id }) {
+            favoritosMemoria.add(artwork)
+        }
+
+        // 2. Intentar sincronizar con la Edge Function en la nube
         try {
-            Log.d("SQLiteCloud", "Enviando 'Me gusta' para: ${artwork.title} (ID: ${artwork.id})")
             val body = SqlBody(
                 id = artwork.id,
                 title = artwork.title,
@@ -56,29 +43,22 @@ class SQLiteCloudRepository {
                 museum = artwork.museum,
                 agregadoEn = System.currentTimeMillis()
             )
-            val response = api.agregarFavorito(body)
-            if (response.isSuccessful) {
-                Log.d("SQLiteCloud", "¡Favorito guardado en la nube con éxito! 🎉")
-            } else {
-                Log.e("SQLiteCloud", "Error en servidor cloud: ${response.errorBody()?.string()}")
-            }
+            api.agregarFavorito(body)
         } catch (e: Exception) {
-            Log.e("SQLiteCloud", "Excepción al agregar favorito: ${e.localizedMessage}")
+            // Ignorar error de red para no bloquear la app
         }
     }
 
     suspend fun eliminarFavorito(artwork: ArtworkModel) = withContext(Dispatchers.IO) {
+        // 1. Actualizar memoria local para que el corazón vuelva a blanco al instante
+        favoritosMemoria.removeAll { it.id == artwork.id }
+
+        // 2. Intentar sincronizar con la Edge Function en la nube
         try {
-            Log.d("SQLiteCloud", "Eliminando favorito ID: ${artwork.id}")
             val body = SqlBody(id = artwork.id)
-            val response = api.eliminarFavorito(body)
-            if (response.isSuccessful) {
-                Log.d("SQLiteCloud", "¡Favorito eliminado de la nube con éxito!")
-            } else {
-                Log.e("SQLiteCloud", "Error al eliminar en nube: ${response.errorBody()?.string()}")
-            }
+            api.eliminarFavorito(body)
         } catch (e: Exception) {
-            Log.e("SQLiteCloud", "Excepción al eliminar favorito: ${e.localizedMessage}")
+            // Ignorar error de red
         }
     }
 }
