@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit
 class SQLiteCloudApiService {
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(5, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
         .build()
 
     fun ejecutarConsulta(sqlQuery: String): Boolean {
@@ -20,21 +20,25 @@ class SQLiteCloudApiService {
                     "?apikey=${SQLiteCloudConfig.API_KEY}&database=${SQLiteCloudConfig.DATABASE}"
 
             val mediaType = "application/json; charset=utf-8".toMediaType()
-            val jsonBody = "{\"query\": \"${sqlQuery.replace("\"", "\\\"")}\"}"
+            val escapedQuery = sqlQuery.replace("\"", "\\\"")
+            val jsonBody = "{\"sql\": \"$escapedQuery\", \"query\": \"$escapedQuery\"}"
             val body = jsonBody.toRequestBody(mediaType)
 
             val request = Request.Builder()
                 .url(url)
+                .header("Authorization", "Bearer ${SQLiteCloudConfig.API_KEY}")
+                .header("apikey", SQLiteCloudConfig.API_KEY)
                 .post(body)
                 .build()
 
             val response = client.newCall(request).execute()
             val success = response.isSuccessful
-            Log.d("SQLiteCloud", "SQL ejecutado en SQLite Cloud: $sqlQuery -> Éxito: $success")
+            val responseString = response.body?.string() ?: ""
+            Log.d("SQLiteCloud", "SQL ejecutado en SQLite Cloud -> Éxito: $success | Respuesta: $responseString")
             response.close()
             success
         } catch (e: Exception) {
-            Log.e("SQLiteCloud", "Error en SQLite Cloud: ${e.localizedMessage}")
+            Log.e("SQLiteCloud", "Error HTTP en SQLite Cloud: ${e.localizedMessage}")
             false
         }
     }
